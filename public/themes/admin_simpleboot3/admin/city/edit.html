@@ -1,0 +1,46 @@
+<include file="public@header"/>
+</head>
+<body>
+<div class="wrap">
+    <ul class="nav nav-tabs">
+        <li><a href="{:url('city/index')}">所有城市</a></li>
+        <li><a href="{:url('city/add')}">添加城市</a></li>
+        <li class="active"><a>编辑城市</a></li>
+    </ul>
+    <form method="post" class="form-horizontal js-ajax-form margin-top-20" action="{:url('city/editPost')}">
+        <div class="form-group">
+            <label for="input-link_name" class="col-sm-2 control-label">城市名称<span class="form-required">*</span></label>
+            <div class="col-md-6 col-sm-10">
+                <input type="text" class="form-control" id="input-link_name" name="city_name" value="{$data.city_name}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="input-link_url" class="col-sm-2 control-label">婚礼联系人手机号<span class="form-required">*</span></label>
+            <div class="col-md-6 col-sm-10">
+                <input type="text" class="form-control" name="wedding_phone" value="{$data.wedding_phone}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="input-link_url" class="col-sm-2 control-label">宝宝联系人手机号<span class="form-required">*</span></label>
+            <div class="col-md-6 col-sm-10">
+                <input type="text" class="form-control" name="baby_phone" value="{$data.baby_phone}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="input-link_url" class="col-sm-2 control-label">聚荟联系人手机号<span class="form-required">*</span></label>
+            <div class="col-md-6 col-sm-10">
+                <input type="text" class="form-control" name="party_phone" value="{$data.party_phone}">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <input type="hidden" name="id" value="{$data.id}">
+                <button type="submit" class="btn btn-primary js-ajax-submit">{:lang('SAVE')}</button>
+                <a class="btn btn-default" href="{:url('city/index')}">{:lang('BACK')}</a>
+            </div>
+        </div>
+    </form>
+</div>
+<script src="__STATIC__/js/admin.js"></script>
+</body>
+</html>
