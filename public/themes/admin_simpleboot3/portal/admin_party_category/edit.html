@@ -62,10 +62,18 @@
                                             <else/>
                                             <img src="{:cmf_get_image_preview_url($more.thumbnail)}"
                                                  id="js-thumbnail-input-preview"
-                                            width="135" style="cursor: pointer"/>
+                                                 width="135" style="cursor: pointer"/>
                                         </if>
                                     </a>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-description">选择所属城市</label>
+                            <div>
+                                <volist name="citydata" id="vo">
+                                    <input type="radio" name="city_id" value="{$vo.id}" <if condition="$city_id eq $vo['id']">checked</if>>{$vo.city_name} &nbsp;
+                                </volist>
                             </div>
                         </div>
                     </div>

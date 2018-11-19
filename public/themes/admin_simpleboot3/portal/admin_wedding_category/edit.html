@@ -68,6 +68,14 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="form-group">
+                            <label for="input-description">选择所属城市</label>
+                            <div>
+                                <volist name="citydata" id="vo">
+                                    <input type="radio" name="city_id" value="{$vo.id}" <if condition="$city_id eq $vo['id']">checked</if>>{$vo.city_name} &nbsp;
+                                </volist>
+                            </div>
+                        </div>
                     </div>
                     <div class="tab-pane" id="B">
                         <div class="form-group">

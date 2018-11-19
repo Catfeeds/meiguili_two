@@ -1,4 +1,5 @@
 <?php
+
 // +----------------------------------------------------------------------
 // | ThinkCMF [ WE CAN DO IT MORE SIMPLE ]
 // +----------------------------------------------------------------------
@@ -8,19 +9,21 @@
 // +----------------------------------------------------------------------
 // | Author: 小夏 < 449134904@qq.com>
 // +----------------------------------------------------------------------
+
 namespace app\portal\controller;
 
+use app\admin\model\CityModel;
 use app\admin\model\RouteModel;
 use cmf\controller\AdminBaseController;
 use app\portal\model\PortalCategoryModel;
 use think\Db;
 use app\admin\model\ThemeModel;
 
-
 class AdminBabyCategoryController extends AdminBaseController
 {
     /**
-     * 文章分类列表
+     * 文章分类列表.
+     *
      * @adminMenu(
      *     'name'   => '分类管理',
      *     'parent' => 'portal/AdminIndex/default',
@@ -34,6 +37,8 @@ class AdminBabyCategoryController extends AdminBaseController
      */
     public function index()
     {
+        $division = input('param.');
+
         $content = hook_one('portal_admin_category_index_view');
 
         if (!empty($content)) {
@@ -41,14 +46,17 @@ class AdminBabyCategoryController extends AdminBaseController
         }
 
         $portalCategoryModel = new PortalCategoryModel();
-        $keyword             = $this->request->param('keyword');
+        $keyword = $this->request->param('keyword');
 
         if (empty($keyword)) {
-            $categoryTree = $portalCategoryModel->adminCategoryTableTree();
+            $categoryTree = $portalCategoryModel->adminCategoryTableTree(0, '', 2);
             $this->assign('category_tree', $categoryTree);
         } else {
-            $categories = $portalCategoryModel->where('name', 'like', "%{$keyword}%")
-                ->where('delete_time', 0)->select();
+            $categories = $portalCategoryModel->alias('a')
+                ->join('cmf_city b', 'a.city_id = b.id')
+                ->where('a.division_id', 'eq', "2")
+                ->where('a.name', 'like', "%{$keyword}%")
+                ->where('a.delete_time', 0)->select();
             $this->assign('categories', $categories);
         }
 
@@ -58,7 +66,8 @@ class AdminBabyCategoryController extends AdminBaseController
     }
 
     /**
-     * 添加文章分类
+     * 添加文章分类.
+     *
      * @adminMenu(
      *     'name'   => '添加文章分类',
      *     'parent' => 'index',
@@ -78,22 +87,28 @@ class AdminBabyCategoryController extends AdminBaseController
             return $content;
         }
 
-        $parentId            = $this->request->param('parent', 0, 'intval');
+        $parentId = $this->request->param('parent', 0, 'intval');
         $portalCategoryModel = new PortalCategoryModel();
-        $categoriesTree      = $portalCategoryModel->adminCategoryTree($parentId);
+        $categoriesTree = $portalCategoryModel->adminCategoryTree($parentId, 0, 2);
 
-        $themeModel        = new ThemeModel();
-        $listThemeFiles    = $themeModel->getActionThemeFiles('portal/List/index');
+        $themeModel = new ThemeModel();
+        $listThemeFiles = $themeModel->getActionThemeFiles('portal/List/index');
         $articleThemeFiles = $themeModel->getActionThemeFiles('portal/Article/index');
+        // 选择城市
+        $cityModel = new CityModel();
+        $cityData = $cityModel->select();
 
+        $this->assign('citydata', $cityData);
         $this->assign('list_theme_files', $listThemeFiles);
         $this->assign('article_theme_files', $articleThemeFiles);
         $this->assign('categories_tree', $categoriesTree);
+
         return $this->fetch();
     }
 
     /**
-     * 添加文章分类提交
+     * 添加文章分类提交.
+     *
      * @adminMenu(
      *     'name'   => '添加文章分类提交',
      *     'parent' => 'index',
@@ -113,22 +128,22 @@ class AdminBabyCategoryController extends AdminBaseController
 
         $result = $this->validate($data, 'PortalCategory');
 
-        if ($result !== true) {
+        if (true !== $result) {
             $this->error($result);
         }
 
         $result = $portalCategoryModel->addCategory($data);
 
-        if ($result === false) {
+        if (false === $result) {
             $this->error('添加失败!');
         }
 
-        $this->success('添加成功!', url('AdminCategory/index'));
-
+        $this->success('添加成功!', url('AdminBabyCategory/index?division_id=2'));
     }
 
     /**
-     * 编辑文章分类
+     * 编辑文章分类.
+     *
      * @adminMenu(
      *     'name'   => '编辑文章分类',
      *     'parent' => 'index',
@@ -142,7 +157,6 @@ class AdminBabyCategoryController extends AdminBaseController
      */
     public function edit()
     {
-
         $content = hook_one('portal_admin_category_edit_view');
 
         if (!empty($content)) {
@@ -154,29 +168,35 @@ class AdminBabyCategoryController extends AdminBaseController
             $category = PortalCategoryModel::get($id)->toArray();
 
             $portalCategoryModel = new PortalCategoryModel();
-            $categoriesTree      = $portalCategoryModel->adminCategoryTree($category['parent_id'], $id);
+            $categoriesTree = $portalCategoryModel->adminCategoryTree($category['parent_id'], $id, 2);
 
-            $themeModel        = new ThemeModel();
-            $listThemeFiles    = $themeModel->getActionThemeFiles('portal/List/index');
+            $themeModel = new ThemeModel();
+            $listThemeFiles = $themeModel->getActionThemeFiles('portal/List/index');
             $articleThemeFiles = $themeModel->getActionThemeFiles('portal/Article/index');
 
             $routeModel = new RouteModel();
-            $alias      = $routeModel->getUrl('portal/List/index', ['id' => $id]);
+            $alias = $routeModel->getUrl('portal/List/index', ['id' => $id]);
+
+            // 选择城市
+            $cityModel = new CityModel();
+            $cityData = $cityModel->select();
+            $this->assign('citydata', $cityData);
 
             $category['alias'] = $alias;
             $this->assign($category);
             $this->assign('list_theme_files', $listThemeFiles);
             $this->assign('article_theme_files', $articleThemeFiles);
             $this->assign('categories_tree', $categoriesTree);
+
             return $this->fetch();
         } else {
             $this->error('操作错误!');
         }
-
     }
 
     /**
-     * 编辑文章分类提交
+     * 编辑文章分类提交.
+     *
      * @adminMenu(
      *     'name'   => '编辑文章分类提交',
      *     'parent' => 'index',
@@ -194,7 +214,7 @@ class AdminBabyCategoryController extends AdminBaseController
 
         $result = $this->validate($data, 'PortalCategory');
 
-        if ($result !== true) {
+        if (true !== $result) {
             $this->error($result);
         }
 
@@ -202,7 +222,7 @@ class AdminBabyCategoryController extends AdminBaseController
 
         $result = $portalCategoryModel->editCategory($data);
 
-        if ($result === false) {
+        if (false === $result) {
             $this->error('保存失败!');
         }
 
@@ -210,7 +230,8 @@ class AdminBabyCategoryController extends AdminBaseController
     }
 
     /**
-     * 文章分类选择对话框
+     * 文章分类选择对话框.
+     *
      * @adminMenu(
      *     'name'   => '文章分类选择对话框',
      *     'parent' => 'index',
@@ -224,8 +245,8 @@ class AdminBabyCategoryController extends AdminBaseController
      */
     public function select()
     {
-        $ids                 = $this->request->param('ids');
-        $selectedIds         = explode(',', $ids);
+        $ids = $this->request->param('ids');
+        $selectedIds = explode(',', $ids);
         $portalCategoryModel = new PortalCategoryModel();
 
         $tpl = <<<tpl
@@ -239,19 +260,21 @@ class AdminBabyCategoryController extends AdminBaseController
 </tr>
 tpl;
 
-        $categoryTree = $portalCategoryModel->adminCategoryTableTree($selectedIds, $tpl);
+        $categoryTree = $portalCategoryModel->adminCategoryTableTree($selectedIds, $tpl, 2);
 
-        $where      = ['delete_time' => 0];
+        $where = ['delete_time' => 0];
         $categories = $portalCategoryModel->where($where)->select();
 
         $this->assign('categories', $categories);
         $this->assign('selectedIds', $selectedIds);
         $this->assign('categories_tree', $categoryTree);
+
         return $this->fetch();
     }
 
     /**
-     * 文章分类排序
+     * 文章分类排序.
+     *
      * @adminMenu(
      *     'name'   => '文章分类排序',
      *     'parent' => 'index',
@@ -266,11 +289,12 @@ tpl;
     public function listOrder()
     {
         parent::listOrders(Db::name('portal_category'));
-        $this->success("排序更新成功！", '');
+        $this->success('排序更新成功！', '');
     }
 
     /**
-     * 文章分类显示隐藏
+     * 文章分类显示隐藏.
+     *
      * @adminMenu(
      *     'name'   => '文章分类显示隐藏',
      *     'parent' => 'index',
@@ -284,25 +308,25 @@ tpl;
      */
     public function toggle()
     {
-        $data                = $this->request->param();
+        $data = $this->request->param();
         $portalCategoryModel = new PortalCategoryModel();
 
-        if (isset($data['ids']) && !empty($data["display"])) {
+        if (isset($data['ids']) && !empty($data['display'])) {
             $ids = $this->request->param('ids/a');
             $portalCategoryModel->where(['id' => ['in', $ids]])->update(['status' => 1]);
-            $this->success("更新成功！");
+            $this->success('更新成功！');
         }
 
-        if (isset($data['ids']) && !empty($data["hide"])) {
+        if (isset($data['ids']) && !empty($data['hide'])) {
             $ids = $this->request->param('ids/a');
             $portalCategoryModel->where(['id' => ['in', $ids]])->update(['status' => 0]);
-            $this->success("更新成功！");
+            $this->success('更新成功！');
         }
-
     }
 
     /**
-     * 删除文章分类
+     * 删除文章分类.
+     *
      * @adminMenu(
      *     'name'   => '删除文章分类',
      *     'parent' => 'index',
@@ -317,15 +341,15 @@ tpl;
     public function delete()
     {
         $portalCategoryModel = new PortalCategoryModel();
-        $id                  = $this->request->param('id');
+        $id = $this->request->param('id');
         //获取删除的内容
         $findCategory = $portalCategoryModel->where('id', $id)->find();
 
         if (empty($findCategory)) {
             $this->error('分类不存在!');
         }
-//判断此分类有无子分类（不算被删除的子分类）
-        $categoryChildrenCount = $portalCategoryModel->where(['parent_id' => $id,'delete_time' => 0])->count();
+        //判断此分类有无子分类（不算被删除的子分类）
+        $categoryChildrenCount = $portalCategoryModel->where(['parent_id' => $id, 'delete_time' => 0])->count();
 
         if ($categoryChildrenCount > 0) {
             $this->error('此分类有子类无法删除!');
@@ -337,11 +361,11 @@ tpl;
             $this->error('此分类有文章无法删除!');
         }
 
-        $data   = [
-            'object_id'   => $findCategory['id'],
+        $data = [
+            'object_id' => $findCategory['id'],
             'create_time' => time(),
-            'table_name'  => 'portal_category',
-            'name'        => $findCategory['name']
+            'table_name' => 'portal_category',
+            'name' => $findCategory['name'],
         ];
         $result = $portalCategoryModel
             ->where('id', $id)

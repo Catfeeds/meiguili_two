@@ -47,19 +47,17 @@ class AdminWeddingCategoryController extends AdminBaseController
 
         $portalCategoryModel = new PortalCategoryModel();
         $keyword = $this->request->param('keyword');
-        if (array_key_exists('division_id', $division)) {
-            $divisionId = $division['division_id'];
-            if (empty($keyword)) {
-                $categoryTree = $portalCategoryModel->adminCategoryTableTree($divisionId);
-                $this->assign('category_tree', $categoryTree);
-            } else {
-                $categories = $portalCategoryModel->alias('a')
-                    ->join('cmf_city b', 'a.city_id = b.id')
-                    ->where('a.division_id', 'eq', "$divisionId")
-                    ->where('a.name', 'like', "%{$keyword}%")
-                    ->where('a.delete_time', 0)->select();
-                $this->assign('categories', $categories);
-            }
+
+        if (empty($keyword)) {
+            $categoryTree = $portalCategoryModel->adminCategoryTableTree(0, '', 1);
+            $this->assign('category_tree', $categoryTree);
+        } else {
+            $categories = $portalCategoryModel->alias('a')
+                ->join('cmf_city b', 'a.city_id = b.id')
+                ->where('a.division_id', 'eq', "1")
+                ->where('a.name', 'like', "%{$keyword}%")
+                ->where('a.delete_time', 0)->select();
+            $this->assign('categories', $categories);
         }
 
         $this->assign('keyword', $keyword);
@@ -91,11 +89,12 @@ class AdminWeddingCategoryController extends AdminBaseController
 
         $parentId = $this->request->param('parent', 0, 'intval');
         $portalCategoryModel = new PortalCategoryModel();
-        $categoriesTree = $portalCategoryModel->adminCategoryTree($parentId);
+        $categoriesTree = $portalCategoryModel->adminCategoryTree($parentId, 0, 1);
 
         $themeModel = new ThemeModel();
         $listThemeFiles = $themeModel->getActionThemeFiles('portal/List/index');
         $articleThemeFiles = $themeModel->getActionThemeFiles('portal/Article/index');
+        // 选择城市
         $cityModel = new CityModel();
         $cityData = $cityModel->select();
 
@@ -169,7 +168,7 @@ class AdminWeddingCategoryController extends AdminBaseController
             $category = PortalCategoryModel::get($id)->toArray();
 
             $portalCategoryModel = new PortalCategoryModel();
-            $categoriesTree = $portalCategoryModel->adminCategoryTree($category['parent_id'], $id);
+            $categoriesTree = $portalCategoryModel->adminCategoryTree($category['parent_id'], $id, 1);
 
             $themeModel = new ThemeModel();
             $listThemeFiles = $themeModel->getActionThemeFiles('portal/List/index');
@@ -177,6 +176,11 @@ class AdminWeddingCategoryController extends AdminBaseController
 
             $routeModel = new RouteModel();
             $alias = $routeModel->getUrl('portal/List/index', ['id' => $id]);
+
+            // 选择城市
+            $cityModel = new CityModel();
+            $cityData = $cityModel->select();
+            $this->assign('citydata', $cityData);
 
             $category['alias'] = $alias;
             $this->assign($category);
@@ -256,7 +260,7 @@ class AdminWeddingCategoryController extends AdminBaseController
 </tr>
 tpl;
 
-        $categoryTree = $portalCategoryModel->adminCategoryTableTree($selectedIds, $tpl);
+        $categoryTree = $portalCategoryModel->adminCategoryTableTree($selectedIds, $tpl, 1);
 
         $where = ['delete_time' => 0];
         $categories = $portalCategoryModel->where($where)->select();

@@ -30,9 +30,17 @@ class PortalCategoryModel extends Model
      * @throws \think\db\exception\ModelNotFoundException
      * @throws \think\exception\DbException
      */
-    public function adminCategoryTree($selectId = 0, $currentCid = 0)
+    public function adminCategoryTree($selectId = 0, $currentCid = 0, $divisionId = '')
     {
-        $where = ['delete_time' => 0];
+        if ($divisionId) {
+            $where = [
+                'delete_time' => 0,
+                'division_id' => $divisionId
+            ];
+        } else {
+            $where = ['delete_time' => 0];
+        }
+
         if (!empty($currentCid)) {
             $where['id'] = ['neq', $currentCid];
         }
@@ -65,7 +73,7 @@ class PortalCategoryModel extends Model
      * @throws \think\db\exception\ModelNotFoundException
      * @throws \think\exception\DbException
      */
-    public function adminCategoryTableTree($divisionId = '', $currentIds = 0, $tpl = '')
+    public function adminCategoryTableTree($currentIds = 0, $tpl = '', $divisionId = '')
     {
         if ($divisionId) {
             $where = [
@@ -81,13 +89,11 @@ class PortalCategoryModel extends Model
 //        }
         $categories = $this->alias('a')
             ->join('cmf_city b', 'a.city_id = b.id')
-
             ->order("a.list_order ASC")
             ->where($where)
             ->field(['a.*', 'b.city_name'])
             ->select()
             ->toArray();
-//        dump($categories);
         $tree       = new Tree();
         $tree->icon = ['&nbsp;&nbsp;│', '&nbsp;&nbsp;├─', '&nbsp;&nbsp;└─'];
         $tree->nbsp = '&nbsp;&nbsp;';
@@ -103,7 +109,18 @@ class PortalCategoryModel extends Model
             $item['status_text']    = empty($item['status'])?'隐藏':'显示';
             $item['checked']        = in_array($item['id'], $currentIds) ? "checked" : "";
             $item['url']            = cmf_url('portal/List/index', ['id' => $item['id']]);
-            $item['str_action']     = '<a href="' . url("AdminCategory/add", ["parent" => $item['id']]) . '">添加子分类</a>  <a href="' . url("AdminCategory/edit", ["id" => $item['id']]) . '">' . lang('EDIT') . '</a>  <a class="js-ajax-delete" href="' . url("AdminCategory/delete", ["id" => $item['id']]) . '">' . lang('DELETE') . '</a> ';
+            if ($divisionId == 1) {
+                $item['str_action']     = '<a href="' . url("AdminWeddingCategory/add", ["parent" => $item['id']]) . '">添加子分类</a>  <a href="' . url("AdminWeddingCategory/edit", ["id" => $item['id']]) . '">' . lang('EDIT') . '</a>  <a class="js-ajax-delete" href="' . url("AdminWeddingCategory/delete", ["id" => $item['id']]) . '">' . lang('DELETE') . '</a> ';
+            }
+            if ($divisionId == 2) {
+                $item['str_action']     = '<a href="' . url("AdminBabyCategory/add", ["parent" => $item['id']]) . '">添加子分类</a>  <a href="' . url("AdminBabyCategory/edit", ["id" => $item['id']]) . '">' . lang('EDIT') . '</a>  <a class="js-ajax-delete" href="' . url("AdminBabyCategory/delete", ["id" => $item['id']]) . '">' . lang('DELETE') . '</a> ';
+            }
+            if ($divisionId == 3) {
+                $item['str_action']     = '<a href="' . url("AdminPartyCategory/add", ["parent" => $item['id']]) . '">添加子分类</a>  <a href="' . url("AdminPartyCategory/edit", ["id" => $item['id']]) . '">' . lang('EDIT') . '</a>  <a class="js-ajax-delete" href="' . url("AdminPartyCategory/delete", ["id" => $item['id']]) . '">' . lang('DELETE') . '</a> ';
+            }
+            if (empty($divisionId)) {
+                $item['str_action']     = '<a href="' . url("AdminCategory/add", ["parent" => $item['id']]) . '">添加子分类</a>  <a href="' . url("AdminCategory/edit", ["id" => $item['id']]) . '">' . lang('EDIT') . '</a>  <a class="js-ajax-delete" href="' . url("AdminCategory/delete", ["id" => $item['id']]) . '">' . lang('DELETE') . '</a> ';
+            }
             if ($item['status']) {
                 $item['str_action'] .= '<a class="js-ajax-dialog-btn" data-msg="您确定隐藏此分类吗" href="' . url('AdminCategory/toggle', ['ids' => $item['id'], 'hide' => 1]) . '">隐藏</a>';
             } else {
@@ -127,6 +144,7 @@ class PortalCategoryModel extends Model
                     </tr>";
         }
         $treeStr = $tree->getTree(0, $tpl);
+
 
         return $treeStr;
     }
